@@ -47,7 +47,7 @@ class Organisation(models.Model):
     orgId = models.UUIDField(unique=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255, null=False)
     description = models.TextField(blank=True)
-    users = models.ManyToManyField(CustomUser, related_name="organizations")
+    users = models.ManyToManyField(CustomUser, related_name="organisations")
 
     def __str__(self) -> str:
         return f"{self.name}"

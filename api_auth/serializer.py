@@ -12,7 +12,7 @@ class UserSerializer(serializers.ModelSerializer):
     # userId = serializers.CharField(source="user_id")
     firstName = serializers.CharField(source="first_name")
     lastName = serializers.CharField(source="last_name")
-    organisations = OrganisationSerializer(many=True, read_only=True)
+    # organisations = OrganisationSerializer(many=True, read_only=True)
 
     class Meta:
         model = CustomUser
@@ -23,7 +23,7 @@ class UserSerializer(serializers.ModelSerializer):
             "email",
             "password",
             "phone",
-            "organisations",
+            # "organisations",
         ]
         extra_kwargs = {"password": {"write_only": True}}
 
