@@ -29,7 +29,7 @@ class CustomUserManager(auth_models.BaseUserManager):
 class CustomUser(auth_models.AbstractUser):
     username = None
     userId = models.CharField(max_length=255, unique=True)
-    email = models.CharField(max_length=255, unique=True)
+    email = models.EmailField(max_length=255, unique=True)
     phone = models.CharField(max_length=15, blank=True)
 
     objects = CustomUserManager()
