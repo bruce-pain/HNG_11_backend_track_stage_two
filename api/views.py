@@ -43,7 +43,7 @@ class OrganisationAPIView(APIView):
 
     permission_classes = [permissions.IsAuthenticated]
 
-    def get(self, request: Request, format=None):
+    def get(self, request: Request):
         organisations = Organisation.objects.filter(users=request.user)
         serializer = OrganisationSerializer(organisations, many=True)
         payload = {
@@ -68,6 +68,30 @@ class OrganisationAPIView(APIView):
 
             return Response(payload, status=status.HTTP_201_CREATED)
         return Response(
-            error_formatter(serializer.errors),
-            status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            {"status": "Bad Request", "message": "Client error", "statusCode": 400},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+
+class OrganisationDetailAPIView(generics.RetrieveAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request: Request, orgId):
+        orgs = Organisation.objects.filter(users=request.user)
+        try:
+            organisation = orgs.get(orgId=orgId)
+        except Organisation.DoesNotExist:
+            return Response(
+                {"message": "organisation does not exist"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        serializer = OrganisationSerializer(organisation)
+
+        return Response(
+            {
+                "status": "success",
+                "message": "Organisation found",
+                "data": serializer.data,
+            }
         )
