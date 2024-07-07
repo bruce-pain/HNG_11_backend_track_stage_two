@@ -2,13 +2,10 @@ from rest_framework import permissions, status, generics
 from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
-from django.contrib.auth import authenticate
-from django.db import transaction
-
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from rest_framework_simplejwt.exceptions import TokenError
 
 from api_auth.serializer import UserSerializer, OrganisationSerializer
+from api.serializer import UserIdSerializer
+
 from api_auth.models import CustomUser, Organisation
 
 
@@ -22,16 +19,30 @@ def error_formatter(errors: dict):
     return error_list
 
 
-class UserDetailAPIView(generics.RetrieveAPIView):
-    serializer_class = UserSerializer
-    lookup_field = "userId"
-    lookup_url_kwarg = "userId"
+class UserDetailAPIView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
 
-    def get_queryset(self):
-        user = self.request.user
-        related_orgs = Organisation.objects.filter(users=user)
+    def get(self, request: Request, userId):
+        related_orgs = Organisation.objects.filter(users=request.user)
+        users = CustomUser.objects.filter(organisations__in=related_orgs).distinct()
+        try:
+            user = users.get(userId=userId)
+        except CustomUser.DoesNotExist:
+            return Response(
+                {"message": "user does not exist"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
-        return CustomUser.objects.filter(organisations__in=related_orgs).distinct()
+        serializer = UserSerializer(user)
+
+        return Response(
+            {
+                "status": "success",
+                "message": "User found",
+                "data": serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 class OrganisationAPIView(APIView):
@@ -67,13 +78,17 @@ class OrganisationAPIView(APIView):
             }
 
             return Response(payload, status=status.HTTP_201_CREATED)
+        # return Response(
+        #     {"status": "Bad Request", "message": "Client error", "statusCode": 400},
+        #     status=status.HTTP_400_BAD_REQUEST,
+        # )
         return Response(
-            {"status": "Bad Request", "message": "Client error", "statusCode": 400},
-            status=status.HTTP_400_BAD_REQUEST,
+            error_formatter(serializer.errors),
+            status=status.HTTP_422_UNPROCESSABLE_ENTITY,
         )
 
 
-class OrganisationDetailAPIView(generics.RetrieveAPIView):
+class OrganisationDetailAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request: Request, orgId):
@@ -93,5 +108,50 @@ class OrganisationDetailAPIView(generics.RetrieveAPIView):
                 "status": "success",
                 "message": "Organisation found",
                 "data": serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class OrganisationAddUserAPIView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request: Request, orgId):
+        serializer = UserIdSerializer(data=request.data)
+
+        if serializer.is_valid():
+            userId = request.data["userId"]
+
+            try:
+                user = CustomUser.objects.get(userId=userId)
+            except CustomUser.DoesNotExist:
+                return Response(
+                    {"message": "user does not exist"},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+            try:
+                organisation = Organisation.objects.get(orgId=orgId)
+            except Organisation.DoesNotExist:
+                return Response(
+                    {"message": "organisation does not exist"},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+            organisation.users.add(user)
+
+            payload = {
+                "status": "success",
+                "message": "User added to organisation successfully",
             }
+
+            return Response(payload, status=status.HTTP_200_OK)
+
+        # return Response(
+        #     {"status": "Bad Request", "message": "Client error", "statusCode": 400},
+        #     status=status.HTTP_400_BAD_REQUEST,
+        # )
+        return Response(
+            error_formatter(serializer.errors),
+            status=status.HTTP_422_UNPROCESSABLE_ENTITY,
         )

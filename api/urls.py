@@ -10,4 +10,9 @@ urlpatterns = [
         views.OrganisationDetailAPIView.as_view(),
         name="organisation-detail",
     ),
+    path(
+        "organisations/<uuid:orgId>/users",
+        views.OrganisationAddUserAPIView.as_view(),
+        name="organisation-add",
+    ),
 ]
