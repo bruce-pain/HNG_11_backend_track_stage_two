@@ -1,3 +1,5 @@
 from django.contrib import admin
+from api_auth.models import Organisation, CustomUser
 
-# Register your models here.
+admin.site.register(Organisation)
+admin.site.register(CustomUser)

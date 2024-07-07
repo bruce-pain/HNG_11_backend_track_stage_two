@@ -1,14 +1,15 @@
-from rest_framework import permissions, status
+from rest_framework import permissions, status, generics
 from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
 from django.contrib.auth import authenticate
+from django.db import transaction
 
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.exceptions import TokenError
 
 from api_auth.serializer import UserSerializer, LoginSerializer
-from api_auth.models import CustomUser
+from api_auth.models import CustomUser, Organisation
 
 
 def error_formatter(errors: dict):
@@ -28,11 +29,12 @@ class UserRegisterAPIView(APIView):
 
     permission_classes = [permissions.AllowAny]
 
+    @transaction.atomic
     def post(self, request: Request, format=None):
         serializer = UserSerializer(data=request.data)
 
         if serializer.is_valid():
-            serializer.save()
+            user = serializer.save()
 
             token_serializer = TokenObtainPairSerializer(
                 data={
@@ -62,6 +64,12 @@ class UserRegisterAPIView(APIView):
                     "user": serializer.data,
                 },
             }
+            new_organisation = Organisation.objects.create(
+                name=f"{serializer.data["firstName"]}'s Organisation"
+            )
+
+            new_organisation.users.add(user)
+
             return Response(payload, status=status.HTTP_201_CREATED)
         return Response(
             error_formatter(serializer.errors),

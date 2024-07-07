@@ -2,6 +2,8 @@ from django.contrib.auth import models as auth_models
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
+import uuid
+
 
 class CustomUserManager(auth_models.BaseUserManager):
     def create_user(self, email, password, **extra_fields):
@@ -28,14 +30,24 @@ class CustomUserManager(auth_models.BaseUserManager):
 
 class CustomUser(auth_models.AbstractUser):
     username = None
-    userId = models.CharField(max_length=255, unique=True)
+    userId = models.UUIDField(unique=True, default=uuid.uuid4, editable=False)
     email = models.EmailField(max_length=255, unique=True)
     phone = models.CharField(max_length=15, blank=True)
 
     objects = CustomUserManager()
 
     USERNAME_FIELD = "email"
-    REQUIRED_FIELDS = ["userId", "first_name", "last_name"]
+    REQUIRED_FIELDS = ["first_name", "last_name"]
 
     def __str__(self):
-        return self.userId
+        return f"{self.first_name} {self.last_name} {self.email}"
+
+
+class Organisation(models.Model):
+    orgId = models.UUIDField(unique=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=255, null=False)
+    description = models.TextField(blank=True)
+    users = models.ManyToManyField(CustomUser, related_name="organizations")
+
+    def __str__(self) -> str:
+        return f"{self.name}"
