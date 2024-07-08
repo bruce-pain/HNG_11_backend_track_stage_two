@@ -1,4 +1,4 @@
-from rest_framework import permissions, status, generics
+from rest_framework import permissions, status
 from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -29,7 +29,11 @@ class UserDetailAPIView(APIView):
             user = users.get(userId=userId)
         except CustomUser.DoesNotExist:
             return Response(
-                {"message": "user does not exist"},
+                {
+                    "status": "Not Found",
+                    "message": "User does not exist",
+                    "statusCode": 404,
+                },
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -78,13 +82,9 @@ class OrganisationAPIView(APIView):
             }
 
             return Response(payload, status=status.HTTP_201_CREATED)
-        # return Response(
-        #     {"status": "Bad Request", "message": "Client error", "statusCode": 400},
-        #     status=status.HTTP_400_BAD_REQUEST,
-        # )
         return Response(
-            error_formatter(serializer.errors),
-            status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            {"status": "Bad Request", "message": "Client error", "statusCode": 400},
+            status=status.HTTP_400_BAD_REQUEST,
         )
 
 
@@ -97,7 +97,11 @@ class OrganisationDetailAPIView(APIView):
             organisation = orgs.get(orgId=orgId)
         except Organisation.DoesNotExist:
             return Response(
-                {"message": "organisation does not exist"},
+                {
+                    "status": "Not Found",
+                    "message": "Organisation does not exist",
+                    "statusCode": 404,
+                },
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -126,7 +130,11 @@ class OrganisationAddUserAPIView(APIView):
                 user = CustomUser.objects.get(userId=userId)
             except CustomUser.DoesNotExist:
                 return Response(
-                    {"message": "user does not exist"},
+                    {
+                        "status": "Not Found",
+                        "message": "User does not exist",
+                        "statusCode": 404,
+                    },
                     status=status.HTTP_404_NOT_FOUND,
                 )
 
@@ -134,7 +142,11 @@ class OrganisationAddUserAPIView(APIView):
                 organisation = Organisation.objects.get(orgId=orgId)
             except Organisation.DoesNotExist:
                 return Response(
-                    {"message": "organisation does not exist"},
+                    {
+                        "status": "Not Found",
+                        "message": "Organisation does not exist",
+                        "statusCode": 404,
+                    },
                     status=status.HTTP_404_NOT_FOUND,
                 )
 
@@ -147,11 +159,7 @@ class OrganisationAddUserAPIView(APIView):
 
             return Response(payload, status=status.HTTP_200_OK)
 
-        # return Response(
-        #     {"status": "Bad Request", "message": "Client error", "statusCode": 400},
-        #     status=status.HTTP_400_BAD_REQUEST,
-        # )
         return Response(
-            error_formatter(serializer.errors),
-            status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            {"status": "Bad Request", "message": "Client error", "statusCode": 400},
+            status=status.HTTP_400_BAD_REQUEST,
         )

@@ -1,4 +1,4 @@
-from rest_framework import permissions, status, generics
+from rest_framework import permissions, status
 from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -9,7 +9,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.exceptions import TokenError
 
 from api_auth.serializer import UserSerializer, LoginSerializer
-from api_auth.models import CustomUser, Organisation
+from api_auth.models import Organisation
 
 
 def error_formatter(errors: dict):
